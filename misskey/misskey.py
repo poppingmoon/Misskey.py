@@ -10,6 +10,7 @@ from typing import (
     Set,
     Any,
     IO as IOTypes,
+    Iterable,
 )
 from urllib.parse import urlparse
 
@@ -17,8 +18,16 @@ import requests
 
 from .enum import (
     NoteVisibility,
+    FfVisibility,
     NotificationsType,
+    EmailNotificationsType,
     LangType,
+    WebhookEventType,
+    AntennaSource,
+    ChartSpan,
+    HashtagsListSortKey,
+    UserSortKey,
+    UserOrigin,
 )
 from .exceptions import (
     MisskeyAuthorizeFailedException,
@@ -275,6 +284,117 @@ class Misskey:
         params = self.__params(locals())
         return self.__request_api('announcements', **params)
 
+    def emojis(self) -> dict:
+        """Get all emojis available for the instance.
+
+        Endpoint:
+            :code:`emojis`
+
+        Returns:
+            dict: Returns a list of emojis.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('emojis')
+
+    def endpoint(
+        self,
+        endpoint: str,
+    ) -> Union[dict, bool]:
+        """Get params of the specified endpoint.
+
+        Args:
+            endpoint (str): Specifies the endpoint.
+
+        Endpoint:
+            :code:`endpoint`
+
+        Returns:
+            dict or bool: Returns the list of param names and types. If the
+            endpoint is not available for the instance, returns :code:`True`.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('endpoint', endpoint=endpoint)
+
+    def endpoints(self) -> List[str]:
+        """Get all endpoints available for the instance.
+
+        Endpoint:
+            :code:`endpoints`
+
+        Returns:
+            `list` of `str`: Returns the list of endpoints.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('endpoints')
+
+    def fetch_rss(
+        self,
+        url: str,
+    ) -> dict:
+        """Fetch RSS from the URL.
+
+        Args:
+            url (str): Specifies the URL to fetch RSS from.
+
+        Endpoint:
+            :code:`fetch-rss`
+
+        Returns:
+            dict: Returns the parsed RSS feed.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('fetch-rss', url=url)
+
+    def get_online_users_count(self) -> dict:
+        """Get number of users currently online in the instance.
+
+        Endpoint:
+            :code:`get-online-users-count`
+
+        Returns:
+            dict: Returns the online users count.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('get-online-users-count')
+
+    def ping(self) -> dict:
+        """Send a ping.
+
+        Endpoint:
+            :code:`ping`
+
+        Returns:
+            dict: Returns response time in epoch milliseconds.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('ping')
+
+    def server_info(self) -> dict:
+        """Get information of the server machine that runs the instance.
+
+        Endpoint:
+            :code:`server-info`
+
+        Returns:
+            dict: Returns the server machine information.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('server-info')
+
     def i_favorites(
         self,
         limit: int = 10,
@@ -353,6 +473,7 @@ class Misskey:
         since_id: Optional[str] = None,
         until_id: Optional[str] = None,
         following: bool = False,
+        unread_only: bool = False,
         mark_as_read: bool = True,
         include_types: Union[
             List[Union[NotificationsType, str]],
@@ -378,6 +499,8 @@ class Misskey:
             until_id (:obj:`str`, optional): Specify the last ID to get.
 
             following (bool): Only following.
+
+            unread_only (bool): Get only unread notifications.
 
             mark_as_read (bool): Specify whether to mark it as read
             when it is acquired.
@@ -451,23 +574,27 @@ class Misskey:
         is_locked: Optional[bool] = None,
         is_explorable: Optional[bool] = None,
         hide_online_status: Optional[bool] = None,
+        public_reactions: Optional[bool] = None,
         careful_bot: Optional[bool] = None,
         auto_accept_followed: Optional[bool] = None,
         no_crawle: Optional[bool] = None,
         is_bot: Optional[bool] = None,
         is_cat: Optional[bool] = None,
+        show_timeline_replies: Optional[bool] = None,
         inject_featured_note: Optional[bool] = None,
         receive_announcement_email: Optional[bool] = None,
         always_mark_nsfw: Optional[bool] = None,
+        auto_sensitive: Optional[bool] = None,
+        ff_visibility: Union[FfVisibility, str, None] = None,
         pinned_page_id: Optional[str] = None,
         muted_words: Optional[List[List[str]]] = None,
-        muting_notification_types: Union[
-            List[Union[NotificationsType, str]],
-            Tuple[NotificationsType],
-            Set[NotificationsType],
-            None,
+        muted_instances: Optional[List[str]] = None,
+        muting_notification_types: Optional[
+            Iterable[Union[NotificationsType, str]]
         ] = None,
-        email_notification_types: Optional[List[str]] = None,
+        email_notification_types: Optional[
+            Iterable[Union[EmailNotificationsType, str]]
+        ] = None,
     ) -> dict:
         """Update your profiles.
 
@@ -500,6 +627,9 @@ class Misskey:
             hide_online_status (:obj:`bool`, optional): Whether to
             hide online status.
 
+            public_reactions (:obj:`bool`, optional): Whether to make your
+            reactions publicly visible.
+
             careful_bot (:obj:`bool`, optional): Whether to
             approve follow-ups from bots.
 
@@ -513,23 +643,40 @@ class Misskey:
 
             is_cat (:obj:`bool`, optional): Specifies whether to use nyaise.
 
-            inject_featured_note (:obj:`bool`, optional):
+            show_timeline_replies (:obj:`bool`, optional): Specifies whether to
+            show replies to other users in the timeline.
 
-            receive_announcement_email (:obj:`bool`, optional):
+            inject_featured_note (:obj:`bool`, optional): Specifies whether to
+            show featured notes in the timeline.
+
+            receive_announcement_email (:obj:`bool`, optional): Specifies
+            whether to receive email notification from the instance.
 
             always_mark_nsfw (:obj:`bool`, optional): Whether to give NSFW
             to the posted file by default.
+
+            auto_sensitive (:obj:`bool`, optional): Specifies whether to allow
+            automatic detection and marking of NSFW media.
+
+            ff_visibility (:obj:`str`, optional): Specifies visibility of
+            follows and followers. Available values are enumerated in
+            :class:`enum.FfVisibility`.
 
             pinned_page_id (:obj:`str`, optional): ID of the page to be fixed.
 
             muted_words (:obj:`list` of :obj:`list` of :obj:`str`, optional):
             Word to mute.
 
-            muting_notification_types (:obj:`list`, optional):
-            Notification type to hide.
+            muted_instance (:obj:`list` of :obj:`str`, optional): Specifies
+            instances to mute.
+
+            muting_notification_types (:obj:`list` of :obj:`str`, optional):
+            Notification type to hide. Available values are enumerated in
+            :class:`enum.NotificationsType`.
 
             email_notification_types (:obj:`list` of :obj:`str`, optional):
-            Specify the notification type for email notification.
+            Specify the notification type for email notification. Available
+            values are enumerated in :class:`enum.EmailNotificationsType`.
 
         Endpoint:
             :code:`i/update`
@@ -555,13 +702,550 @@ class Misskey:
             fields = [{'name': key, 'value': val}
                       for key, val in fields.items()]
 
-        if type(muting_notification_types) is list:
-            for index, val in enumerate(muting_notification_types):
-                if type(val) is str:
-                    muting_notification_types[index] = NotificationsType(val)
+        if type(ff_visibility) is str:
+            ff_visibility = FfVisibility(ff_visibility)
+
+        if muting_notification_types is not None:
+            muting_notification_types = [
+                NotificationsType(val) if type(val) is str else val
+                for val in muting_notification_types
+            ]
+
+        if email_notification_types is not None:
+            email_notification_types = [
+                EmailNotificationsType(val) if type(val) is str else val
+                for val in email_notification_types
+            ]
 
         params = self.__params(locals())
         return self.__request_api('i/update', **params)
+
+    def i_export_blocking(self) -> bool:
+        """Export list of users you are blocking to your drive.
+
+        Endpoint:
+            :code:`i/export-blocking`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('i/export-blocking')
+
+    def i_export_favorites(self) -> bool:
+        """Export list of favorite notes to your drive.
+
+        Endpoint:
+            :code:`i/export-favorites`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('i/export-favorites')
+
+    def i_export_following(
+        self,
+        exclude_muting: bool = False,
+        exclude_inactive: bool = False,
+    ) -> bool:
+        """Export list of users you are following to your drive.
+
+        Args:
+            exclude_muting (bool, default: :code:`False`): Specifies whether to
+            exclude users you are muting.
+
+            exclude_inactive (bool, default: :code:`False`): Specifies whether
+            to exclude users that are inactive for more than 90 days.
+
+        Endpoint:
+            :code:`i/export-following`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('i/export-following', **params)
+
+    def i_export_mute(self) -> bool:
+        """Export list of users you are muting to your drive.
+
+        Endpoint:
+            :code:`i/export-mute`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('i/export-mute')
+
+    def i_export_notes(self) -> bool:
+        """Export list of notes you have created to your drive.
+
+        Endpoint:
+            :code:`i/export-notes`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('i/export-notes')
+
+    def i_export_user_lists(self) -> bool:
+        """Export list of user lists you have created to your drive.
+
+        Endpoint:
+            :code:`i/export-user-lists`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('i/export-user-lists')
+
+    def i_gallery_likes(
+        self,
+        limit: int = 10,
+        since_id: Optional[str] = None,
+        until_id: Optional[str] = None,
+    ) -> List[dict]:
+        """Get list of likes you gave to gallery posts.
+
+        Args:
+            limit (int, default: 10): Specifies the amount to get.
+            You can specify from 1 to 100.
+
+            since_id (str, optional): Specifies the first ID to get.
+
+            until_id (str, optional): Specifies the last ID to get.
+
+        Endpoint:
+            :code:`i/gallery/likes`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns the list of likes.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('i/gallery/likes', **params)
+
+    def i_gallery_posts(
+        self,
+        limit: int = 10,
+        since_id: Optional[str] = None,
+        until_id: Optional[str] = None,
+    ) -> List[dict]:
+        """Get list of gallery posts you have created.
+
+        Args:
+            limit (int, default: 10): Specifies the amount to get.
+            You can specify from 1 to 100.
+
+            since_id (str, optional): Specifies the first ID to get.
+
+            until_id (str, optional): Specifies the last ID to get.
+
+        Endpoint:
+            :code:`i/gallery/posts`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns the list of gallery posts.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('i/gallery/posts', **params)
+
+    def i_get_word_muted_notes_count(self) -> dict:
+        """Get number of notes that were word-muted by your preferences.
+
+        Endpoint:
+            :code:`i/get-word-muted-notes-count`
+
+        Returns:
+            dict: Returns word muted notes count.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('i/get-word-muted-notes-count')
+
+    def i_import_blocking(
+        self,
+        file_id: str,
+    ) -> bool:
+        """Import users to block from your drive file.
+
+        Args:
+            file_id (str): Specifies the file ID to import.
+
+        Endpoint:
+            :code:`i/import-blocking`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('i/import-blocking', fileId=file_id)
+
+    def i_import_following(
+        self,
+        file_id: str,
+    ) -> bool:
+        """Import users to follow from your drive file.
+
+        Args:
+            file_id (str): Specifies the file ID to import.
+
+        Endpoint:
+            :code:`i/import-following`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('i/import-following', fileId=file_id)
+
+    def i_import_muting(
+        self,
+        file_id: str,
+    ) -> bool:
+        """Import users to mute from your drive file.
+
+        Args:
+            file_id (str): Specifies the file ID to import.
+
+        Endpoint:
+            :code:`i/import-muting`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('i/import-muting', fileId=file_id)
+
+    def i_import_user_lists(
+        self,
+        file_id: str,
+    ) -> bool:
+        """Import user lists from your drive file.
+
+        Args:
+            file_id (str): Specifies the file ID to import.
+
+        Endpoint:
+            :code:`i/import-user-lists`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('i/import-user-lists', fileId=file_id)
+
+    def i_page_likes(
+        self,
+        limit: int = 10,
+        since_id: Optional[str] = None,
+        until_id: Optional[str] = None,
+    ) -> List[dict]:
+        """Get list of likes you gave to pages.
+
+        Args:
+            limit (int, default: 10): Specifies the amount to get.
+            You can specify from 1 to 100.
+
+            since_id (str, optional): Specifies the first ID to get.
+
+            until_id (str, optional): Specifies the last ID to get.
+
+        Endpoint:
+            :code:`i/page-likes`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns the list of likes.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('i/page-likes', **params)
+
+    def i_pages(
+        self,
+        limit: int = 10,
+        since_id: Optional[str] = None,
+        until_id: Optional[str] = None,
+    ) -> List[dict]:
+        """Get list of pages you have created.
+
+        Args:
+            limit (int, default: 10): Specifies the amount to get.
+            You can specify from 1 to 100.
+
+            since_id (str, optional): Specifies the first ID to get.
+
+            until_id (str, optional): Specifies the last ID to get.
+
+        Endpoint:
+            :code:`i/pages`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns the list of likes.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('i/pages', **params)
+
+    def i_read_all_unread_notes(self) -> bool:
+        """Mark all unread notes as read.
+
+        Endpoint:
+            :code:`i/read-all-unread-notes`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('i/read-all-unread-notes')
+
+    def i_read_announcement(
+        self,
+        announcement_id: str,
+    ) -> bool:
+        """Mark the specified annoucement as read.
+
+        Args:
+            announcement_id (str): Specifies the announcement ID to read.
+
+        Endpoint:
+            :code:`i/read-announcement`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api(
+            'i/read-announcement',
+            announcementId=announcement_id,
+        )
+
+    def i_webhooks_create(
+        self,
+        name: str,
+        url: str,
+        secret: str,
+        on: List[Union[WebhookEventType, str]],
+    ) -> dict:
+        """Create a webhook.
+
+        Args:
+            name (str): Specifies the name of webhook.
+
+            url (str): Specifies the URL to send HTTP request to.
+
+            secret (str): Specifies the secret value.
+
+            on (str): Specifies the list of events. Available values are
+            enumerated in :class:`enum.WebhookEventType`.
+
+        Endpoint:
+            :code:`i/webhooks/create`
+
+        Returns:
+            dict: Returns the created webhook information.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        on = [
+            WebhookEventType(val) if type(val) is str else val
+            for val in on
+        ]
+        params = self.__params(locals())
+        return self.__request_api('i/webhooks/create', **params)
+
+    def i_webhooks_delete(
+        self,
+        webhook_id: str,
+    ) -> bool:
+        """Delete a webhook.
+
+        Args:
+            webhook_id (str): Specifies the webhook ID to delete.
+
+        Endpoint:
+            :code:`i/webhooks/delete`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('i/webhooks/delete', webhookId=webhook_id)
+
+    def i_webhooks_list(self) -> List[dict]:
+        """Get list of webhooks you have created.
+
+        Endpoint:
+            :code:`i/webhooks/list`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns the list of webhooks.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('i/webhooks/list', **params)
+
+    def i_webhooks_show(
+        self,
+        webhook_id: str,
+    ) -> dict:
+        """Get information of the specified webhook.
+
+        Args:
+            webhook_id (str): Specifies the webhook ID to get.
+
+        Endpoint:
+            :code:`i/webhooks/show`
+
+        Returns:
+            dict: Returns the webhook information.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('i/webhooks/show', **params)
+
+    def i_webhooks_update(
+        self,
+        webhook_id: str,
+        name: str,
+        url: str,
+        secret: str,
+        on: List[Union[WebhookEventType, str]],
+        active: bool,
+    ) -> bool:
+        """Update a webhook.
+
+        Args:
+            webhook_id (str): Specifies the webhook ID to update.
+
+            name (str): Specifies the name of webhook.
+
+            url (str): Specifies the URL to send HTTP request to.
+
+            secret (str): Specifies the secret value.
+
+            on (str): Specifies the list of events. Available values are
+            enumerated in :class:`enum.WebhookEventType`.
+
+            active (bool): Specifies whether to activate the webhook.
+
+        Endpoint:
+            :code:`i/webhooks/update`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+
+            ValueError: Raise if :code:`on` is invalid.
+        """
+        on = [
+            WebhookEventType(val) if type(val) is str else val
+            for val in on
+        ]
+        params = self.__params(locals())
+        return self.__request_api('i/webhooks/update', **params)
+
+    def notifications_create(
+        self,
+        body: str,
+        header: Optional[str] = None,
+        icon: Optional[str] = None,
+    ) -> bool:
+        """Create a notification.
+
+        Args:
+            body (str): Specifies the body text of the notification.
+
+            header (str): Specifies the header text of the notification.
+
+            icon (str): Specifies the URL of the notification icon image.
+
+        Endpoint:
+            :code:`notifications/create`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('notifications/create', **params)
+
+    def notifications_read(
+        self,
+        notification_id: Union[str, List[str]],
+    ) -> bool:
+        """Mark a notification as read.
+
+        Args:
+            notification_id (str or :obj:`list` of :obj:`str`): Specifies
+            notification ID to mark as read. If specified by :obj:`list`,
+            read multiple notifications.
+
+        Endpoint:
+            :code:`notifications/read`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        if type(notification_id) is str:
+            notification_id = [notification_id]
+        return self.__request_api(
+            'notifications/read',
+            notificationIds=notification_id
+        )
 
     def notes_create(
         self,
@@ -569,7 +1253,6 @@ class Misskey:
         cw: Optional[str] = None,
         visibility: Union[NoteVisibility, str] = NoteVisibility.PUBLIC,
         visible_user_ids: Optional[List[str]] = None,
-        via_mobile: bool = False,
         local_only: bool = False,
         no_extract_mentions: bool = False,
         no_extract_hashtags: bool = False,
@@ -577,6 +1260,7 @@ class Misskey:
         file_ids: Optional[List[str]] = None,
         reply_id: Optional[str] = None,
         renote_id: Optional[str] = None,
+        channel_id: Optional[str] = None,
         poll_choices: Optional[Union[List[str], Tuple[str]]] = None,
         poll_multiple: bool = False,
         poll_expires_at: Optional[Union[int, datetime.datetime]] = None,
@@ -595,9 +1279,6 @@ class Misskey:
             visible_user_ids (:obj:`list` of :obj:`str`, optional):
             If :code:`visibility` is :code:`specified`,
             specify the user ID in the list.
-
-            via_mobile (:obj:`bool`, optional): Specify whether to post from
-            mobile. It doesn't work with recent Misskey versions.
 
             local_only (:obj:`bool`, optional): Specifies whether to
             post only the instance you are using.
@@ -618,6 +1299,9 @@ class Misskey:
             the reply destination.
 
             renote_id (:obj:`str`, optional): Specify the Note ID to renote.
+
+            channel_id (:obj:`str`, optional): Specify the channel ID to post
+            the note to.
 
             poll_choices (:obj:`list` of :obj:`str`, optional): Specify the
             voting item. You can specify 2 or more and 10 or less.
@@ -712,7 +1396,7 @@ class Misskey:
             limit (int, optional): Specify the amount to get.
             You can specify from 1 to 100.
 
-            offset (int, optional): Specify the offset to get.
+            offset (int, optional): Specifies the offset to get.
 
         Endpoint:
             :code:`notes/conversation`
@@ -861,7 +1545,7 @@ class Misskey:
             limit (int, optional): Specify the amount to get.
             You can specify from 1 to 100.
 
-            offset (int, optional): Specify the offset to get.
+            offset (int, optional): Specifies the offset to get.
 
             since_id (str, optional): Specify the first ID to get.
 
@@ -1025,52 +1709,6 @@ class Misskey:
             noteId=note_id,
         )
 
-    def notes_watching_create(
-        self,
-        note_id: str,
-    ) -> bool:
-        """Watch a note.
-
-        Args:
-            note_id (str): Specify the Note ID to watch.
-
-        Endpoint:
-            :code:`notes/watching/create`
-
-        Returns:
-            bool: Returns :code:`True` if the request was successful.
-
-        Raises:
-            MisskeyAPIException: Raise if the API request fails.
-        """
-        return self.__request_api(
-            'notes/watching/create',
-            noteId=note_id,
-        )
-
-    def notes_watching_delete(
-        self,
-        note_id: str,
-    ) -> bool:
-        """Unwatch a note.
-
-        Args:
-            note_id (str): Specify the Note ID to unwatch.
-
-        Endpoint:
-            :code:`notes/watching/delete`
-
-        Returns:
-            bool: Returns :code:`True` if the request was successful.
-
-        Raises:
-            MisskeyAPIException: Raise if the API request fails.
-        """
-        return self.__request_api(
-            'notes/watching/delete',
-            noteId=note_id,
-        )
-
     def notes_delete(
         self,
         note_id: str,
@@ -1101,7 +1739,7 @@ class Misskey:
         include_my_renotes: bool = True,
         include_renoted_my_notes: bool = True,
         include_local_renotes: bool = True,
-        with_files: bool = True,
+        with_files: bool = False,
     ) -> List[dict]:
         """Show your home timeline.
 
@@ -1117,7 +1755,7 @@ class Misskey:
             the first date to get.
 
             until_date (int, datetime.datetime, optional): Specify
-             the last date to get.
+            the last date to get.
 
             include_my_renotes (bool, optional): Specify whether to
             include your notes.
@@ -1128,7 +1766,8 @@ class Misskey:
             include_local_renotes (bool, optional): Specify whether to
             include local renotes.
 
-            with_files (bool, optional): Specify whether to include files.
+            with_files (bool, optional): Specify whether to get only notes with
+            files.
 
         Endpoint:
             :code:`notes/timeline`
@@ -1155,7 +1794,7 @@ class Misskey:
         until_id: Optional[str] = None,
         since_date: Union[int, datetime.datetime, None] = None,
         until_date: Union[int, datetime.datetime, None] = None,
-        with_files: bool = True,
+        with_files: bool = False,
         file_type: Optional[List[str]] = None,
         exclude_nsfw: bool = False,
     ) -> List[dict]:
@@ -1173,9 +1812,10 @@ class Misskey:
             the first date to get.
 
             until_date (int, datetime.datetime, optional): Specify
-             the last date to get.
+            the last date to get.
 
-            with_files (bool, optional): Specify whether to include files.
+            with_files (bool, optional): Specify whether to get only notes with
+            files.
 
             file_type (:obj:`list` of :obj:`str`, optional): Specify the file
             type to get.
@@ -1211,7 +1851,7 @@ class Misskey:
         include_my_renotes: bool = True,
         include_renoted_my_notes: bool = True,
         include_local_renotes: bool = True,
-        with_files: bool = True,
+        with_files: bool = False,
     ) -> List[dict]:
         """Show hybrid(home + local) timeline.
 
@@ -1227,7 +1867,7 @@ class Misskey:
             the first date to get.
 
             until_date (int, datetime.datetime, optional): Specify
-             the last date to get.
+            the last date to get.
 
             include_my_renotes (bool, optional): Specify whether to
             include your notes.
@@ -1238,7 +1878,8 @@ class Misskey:
             include_local_renotes (bool, optional): Specify whether to
             include local renotes.
 
-            with_files (bool, optional): Specify whether to include files.
+            with_files (bool, optional): Specify whether to get only notes with
+            files.
 
         Endpoint:
             :code:`notes/hybrid-timeline`
@@ -1265,7 +1906,7 @@ class Misskey:
         until_id: Optional[str] = None,
         since_date: Union[int, datetime.datetime, None] = None,
         until_date: Union[int, datetime.datetime, None] = None,
-        with_files: bool = True,
+        with_files: bool = False,
     ) -> List[dict]:
         """Show global timeline.
 
@@ -1281,9 +1922,10 @@ class Misskey:
             the first date to get.
 
             until_date (int, datetime.datetime, optional): Specify
-             the last date to get.
+            the last date to get.
 
-            with_files (bool, optional): Specify whether to include files.
+            with_files (bool, optional): Specify whether to get only notes with
+            files.
 
         Endpoint:
             :code:`notes/global-timeline`
@@ -1302,6 +1944,375 @@ class Misskey:
                 until_date.timestamp() * 1000)
         params = self.__params(locals())
         return self.__request_api('notes/global-timeline', **params)
+
+    def notes(
+        self,
+        limit: int = 10,
+        since_id: Optional[str] = None,
+        until_id: Optional[str] = None,
+        local: bool = False,
+        reply: Optional[bool] = None,
+        renote: Optional[bool] = None,
+        with_files: Optional[bool] = None,
+        pool: Optional[bool] = None,
+    ) -> List[dict]:
+        """Get a list of notes.
+
+        Args:
+            limit (int, default: 10): Specifies the amount to get.
+            You can specify from 1 to 100.
+
+            since_id (str, optional): Specifies the first ID to get.
+
+            until_id (str, optional): Specifies the last ID to get.
+
+            local (bool, default: :code:`False`): Specifies whether to only get
+            local notes.
+
+            reply (bool, optional): Specifies whether to get replies. If
+            :code:`True`, get only replies and if :code:`False`, get only
+            notes which are not replies. If :code:`None`, get both notes.
+
+            renote (bool, optional): Specifies whether to get renotes. If
+            :code:`True`, get only renotes and if :code:`False`, get only
+            notes which are not renotes. If :code:`None`, get both notes.
+
+            with_files (bool, optional): Specifies whether to get note with
+            files. If :code:`True`, get only notes with files and if
+            :code:`False`, get only notes without files. If :code:`None`, get
+            both notes.
+
+            poll (bool, optional): Specifies whether to get note with poll. If
+            :code:`True`, get only notes with polls and if :code:`False`, get
+            only notes without polls. If :code:`None`, get both notes.
+
+        Endpoint:
+            :code:`notes`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns the list of notes.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('notes', **params)
+
+    def notes_clips(
+        self,
+        note_id: str
+    ) -> List[dict]:
+        """Get a list of clips that contain the specified note.
+
+        Args:
+            note_id (str): Specifies the note ID.
+
+        Endpoint:
+            :code:`notes/clips`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns the list of notes.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('notes/clips', noteId=note_id)
+
+    def notes_featured(
+        self,
+        limit: int = 10,
+        offset: int = 0,
+    ) -> List[dict]:
+        """Get featured notes.
+
+        Args:
+            limit (int, default: 10): Specifies the amount to get.
+            You can specify from 1 to 100.
+
+            offset (int, default: 0): Specifies the offset to get.
+
+        Endpoint:
+            :code:`notes/featured`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns featured notes sorted in
+            reverse chronological order.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('notes/featured', **params)
+
+    def notes_mentions(
+        self,
+        following: bool = False,
+        limit: int = 10,
+        since_id: Optional[str] = None,
+        until_id: Optional[str] = None,
+        visibility: Optional[Union[NoteVisibility, str]] = None,
+    ) -> List[dict]:
+        """Get a list of notes that mention you.
+
+        Args:
+            following (bool, default: :code:`False`): Specifies whether to get
+            notes only from you or users you follow.
+
+            limit (int, default: 10): Specifies the amount to get.
+            You can specify from 1 to 100.
+
+            since_id (str, optional): Specifies the first ID to get.
+
+            until_id (str, optional): Specifies the last ID to get.
+
+            visibility (str, optional): Specifies the visibility of the note to
+            get. Available values are enumerated in
+            :class:`enum.NoteVisibility`.
+
+        Endpoint:
+            :code:`notes/mentions`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns the list of notes.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+
+            ValueError: Raise if :code:`visibility` is invalid.
+        """
+        if type(visibility) is str:
+            visibility = NoteVisibility(visibility)
+        params = self.__params(locals())
+        return self.__request_api('notes/mentions', **params)
+
+    def notes_polls_recommendation(
+        self,
+        limit: int = 10,
+        offset: int = 0,
+    ) -> List[dict]:
+        """Get a list of recommended notes with polls.
+
+        Args:
+            limit (int, default: 10): Specifies the amount to get.
+            You can specify from 1 to 100.
+
+            offset (int, default: 0): Specifies the offset to get.
+
+        Endpoint:
+            :code:`notes/polls/recommendation`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns the list of recommended notes.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('notes/polls/recommendation', **params)
+
+    def notes_search(
+        self,
+        query: str,
+        limit: int = 10,
+        since_id: Optional[str] = None,
+        until_id: Optional[str] = None,
+        offset: int = 0,
+        host: Optional[str] = None,
+        user_id: Optional[str] = None,
+        channel_id: Optional[str] = None,
+    ) -> List[dict]:
+        """Search notes that contain query.
+
+        Args:
+            query (str): Specifies search query.
+
+            limit (int, default: 10): Specifies the amount to get.
+            You can specify from 1 to 100.
+
+            since_id (str, optional): Specifies the first ID to get.
+
+            until_id (str, optional): Specifies the last ID to get.
+
+            offset (int, default: 0): Specifies the offset to get.
+
+            host (str, optional): Specifies the host to search. The local host
+            is represented with :code:`None`.
+
+            user_id (str, optional): Specifies the user ID to search.
+
+            channel_id (str, optional): Specifies the channel ID to search.
+
+        Endpoint:
+            :code:`notes/search`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns the list of notes.
+
+        Note:
+            If :code:`user_id` is set, :code:`channel_id` is ignored.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('notes/search', **params)
+
+    def notes_search_by_tag(
+        self,
+        tag: Union[str, List[List[str]]],
+        limit: int = 10,
+        since_id: Optional[str] = None,
+        until_id: Optional[str] = None,
+        reply: Optional[bool] = None,
+        renote: Optional[bool] = None,
+        with_files: Optional[bool] = None,
+        poll: Optional[bool] = None,
+    ) -> List[dict]:
+        """Search notes that contain specified hashtags.
+
+        Args:
+            tag (str or :obj:`list` of :obj:`list` of :obj:`str`): Specifies
+            the hashtag to search. If specified by :obj:`list`, tags inside the
+            inner lists are chained with AND, and the outer lists are chained
+            with OR.
+
+            limit (int, default: 10): Specifies the amount to get.
+            You can specify from 1 to 100.
+
+            since_id (str, optional): Specifies the first ID to get.
+
+            until_id (str, optional): Specifies the last ID to get.
+
+            reply (bool, optional): Specifies whether to get replies. If
+            :code:`True`, get only replies and if :code:`False`, get only
+            notes which are not replies. If :code:`None`, get both notes.
+
+            renote (bool, optional): Specifies whether to get renotes. If
+            :code:`True`, get only renotes and if :code:`False`, get only
+            notes which are not renotes. If :code:`None`, get both notes.
+
+            with_files (bool, optional): Specifies whether to get note with
+            file. If :code:`True`, get only notes with files and if
+            :code:`False`, get only notes without files. If :code:`None`, get
+            both notes.
+
+            poll (bool, optional): Specifies whether to get note with poll. If
+            :code:`True`, get only notes with polls and if :code:`False`, get
+            only notes without polls. If :code:`None`, get both notes.
+
+        Endpoint:
+            :code:`notes/search-by-tag`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns the list of notes.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        if type(tag) is list:
+            query = tag
+            tag = None
+        params = self.__params(locals())
+        return self.__request_api('notes/search-by-tag', **params)
+
+    def notes_thread_muting_create(
+        self,
+        note_id: str,
+    ) -> bool:
+        """Mute the thread that contains the specified note.
+
+        Args:
+            note_id (str): Specifies the note ID.
+
+        Endpoint:
+            :code:`notes/thread-muting/create`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('notes/thread-muting/create', noteId=note_id)
+
+    def notes_thread_muting_delete(
+        self,
+        note_id: str,
+    ) -> bool:
+        """Unmute the thread that contains the specified note.
+
+        Args:
+            note_id (str): Specifies the note ID.
+
+        Endpoint:
+            :code:`notes/thread-muting/delete`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('notes/thread-muting/delete', noteId=note_id)
+
+    def notes_user_list_timeline(
+        self,
+        list_id: str,
+        limit: int = 10,
+        since_id: Optional[str] = None,
+        until_id: Optional[str] = None,
+        since_date: Union[int, datetime.datetime, None] = None,
+        until_date: Union[int, datetime.datetime, None] = None,
+        include_my_renotes: bool = True,
+        include_renoted_my_notes: bool = True,
+        include_local_renotes: bool = True,
+        with_files: bool = False,
+    ) -> List[dict]:
+        """Show the user list timeline.
+
+        Args:
+            list_id (str): Specifies the list ID.
+
+            limit (int, optional): Specifies the amount to get.
+            You can specify from 1 to 100.
+
+            since_id (str, optional): Specifies the first ID to get.
+
+            until_id (str, optional): Specifies the last ID to get.
+
+            since_date (int, datetime.datetime, optional): Specifies
+            the first date to get.
+
+            until_date (int, datetime.datetime, optional): Specifies
+            the last date to get.
+
+            include_my_renotes (bool, optional): Specifies whether to
+            include your notes.
+
+            include_renoted_my_notes (bool, optional): Specifies whether to
+            include renotes of your notes.
+
+            include_local_renotes (bool, optional): Specifies whether to
+            include local renotes.
+
+            with_files (bool, optional): Specifies whether to get only notes
+            with files.
+
+        Endpoint:
+            :code:`notes/user-list-timeline`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns a list of notes.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        if isinstance(since_date, datetime.datetime):
+            since_date = math.floor(since_date.timestamp() * 1000)
+        if isinstance(until_date, datetime.datetime):
+            until_date = math.floor(until_date.timestamp() * 1000)
+        params = self.__params(locals())
+        return self.__request_api('notes/user-list-timeline', **params)
 
     def users_show(
         self,
@@ -1378,6 +2389,8 @@ class Misskey:
             MisskeyAPIException: Raise if the API request fails.
         """
         params = self.__params(locals())
+        if host is None:
+            params['host'] = None
         return self.__request_api('users/following', **params)
 
     def users_followers(
@@ -1406,7 +2419,7 @@ class Misskey:
             You can specify from 1 to 100.
 
         Endpoint:
-            :code:`users/following`
+            :code:`users/followers`
 
         Note:
             You must specify one of user_id, username (and host).
@@ -1418,6 +2431,8 @@ class Misskey:
             MisskeyAPIException: Raise if the API request fails.
         """
         params = self.__params(locals())
+        if host is None:
+            params['host'] = None
         return self.__request_api('users/followers', **params)
 
     def users_notes(
@@ -1701,7 +2716,7 @@ class Misskey:
             comment (str): Specify the comment.
 
         Endpoint:
-            :code:`users/report/abuse`
+            :code:`users/report-abuse`
 
         Returns:
             bool: Returns :code:`True` if the report is sent.
@@ -1711,6 +2726,383 @@ class Misskey:
         """
         params = self.__params(locals())
         return self.__request_api('users/report-abuse', **params)
+
+    def users_clips(
+        self,
+        user_id: str,
+        limit: int = 10,
+        since_id: Optional[str] = None,
+        until_id: Optional[str] = None,
+    ) -> List[dict]:
+        """Get list of clips created by the specified user.
+
+        Args:
+            user_id (str): Specifies the user ID.
+
+            limit (int, default: :code:`10`): Specifies the amount to get.
+            You can specify from 1 to 100.
+
+            since_id (str, optional): Specifies the first ID to get.
+
+            until_id (str, optional): Specifies the last ID to get.
+
+        Endpoint:
+            :code:`users/clips`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns a list of clips.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('users/clips', **params)
+
+    def users(
+        self,
+        limit: int = 10,
+        offset: int = 0,
+        alive_only: bool = False,
+        origin: Union[UserOrigin, str] = UserOrigin.LOCAL,
+        sort_key: Union[
+            UserSortKey,
+            str,
+        ] = UserSortKey.FOLLOWER,
+        sort_asc: bool = False,
+        hostname: Optional[str] = None,
+    ) -> List[dict]:
+        """Get a list of users.
+
+        Args:
+            limit (int, default: 10): Specifies the amount to get.
+            You can specify from 1 to 100.
+
+            offset (int, default: 0): Specifies the offset to get.
+
+            alive_only (bool, default: :code:`False`): Specifies whether to
+            only get users active in 5 days.
+
+            origin (str, default: :code:`local`): Specifies the origin type of
+            users to get. Available values are enumerated in
+            :class:`enum.UserOrigin`. If :code:`combined`, both :code:`local`
+            and :code:`remote` users are included in the result.
+
+            sort_key (str, default: :code:`follower`):
+            Specifies sort key. Available values are enumerated in
+            :class:`enum.UserSortKey`.
+
+            sort_asc (bool, default: :code:`False`): Specifies the sort order.
+            Hashtags sort in ascending order according to the key specified
+            with :obj:`sort_key` if :code:`True`, descending order if
+            :code:`False`.
+
+            hostname (str, optional): Specifies the host to search. The local
+            host is represented with :code:`None`.
+
+        Endpoint:
+            :code:`users`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns the list of users.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+
+            ValueError: Raise if :code:`origin` or :code:`sort_key` is invalid.
+        """
+        state = 'alive' if alive_only else 'all'
+        if type(origin) is str:
+            origin = UserOrigin(origin)
+        if type(sort_key) is str:
+            sort_key = UserSortKey(sort_key)
+        sort = '-' if sort_asc else '+'
+        sort += sort_key.value
+        del alive_only, sort_key, sort_asc
+        params = self.__params(locals())
+        return self.__request_api('users', **params)
+
+    def users_gallery_posts(
+        self,
+        user_id: str,
+        limit: int = 10,
+        since_id: Optional[str] = None,
+        until_id: Optional[str] = None,
+    ) -> List[dict]:
+        """Show all gallery posts created by the specified user.
+
+        Args:
+            user_id (str): Specifies the user ID.
+
+            limit (int, default: 10): Specifies the amount to get.
+            You can specify from 1 to 100.
+
+            since_id (str, optional): Specifies the first ID to get.
+
+            until_id (str, optional): Specifies the last ID to get.
+
+        Endpoint:
+            :code:`users/gallery/posts`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns the list of gallery posts.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('users/gallery/posts', **params)
+
+    def users_get_frequently_replied_users(
+        self,
+        user_id: str,
+        limit: int = 10,
+    ) -> List[dict]:
+        """Get list of users sorted by the number of replies sent by the
+        specified user.
+
+        Args:
+            user_id (str): Specifies the user ID.
+
+            limit (int, default: 10): Specifies the amount to get.
+            You can specify from 1 to 100.
+
+        Endpoint:
+            :code:`users/get-frequently-replied-users`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns the list of notes and weights.
+            Weight is defined as number of replies the user accepted divided by
+            the maximum number of replies the sender sent to a user.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api(
+            'users/get-frequently-replied-users',
+            userId=user_id,
+        )
+
+    def users_pages(
+        self,
+        user_id: str,
+        limit: int = 10,
+        since_id: Optional[str] = None,
+        until_id: Optional[str] = None,
+    ) -> List[dict]:
+        """Show all pages created by the specified user.
+
+        Args:
+            user_id (str): Specifies the user ID.
+
+            limit (int, default: 10): Specifies the amount to get.
+            You can specify from 1 to 100.
+
+            since_id (str, optional): Specifies the first ID to get.
+
+            until_id (str, optional): Specifies the last ID to get.
+
+        Endpoint:
+            :code:`users/pages`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns the list of pages.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('users/pages', **params)
+
+    def users_reactions(
+        self,
+        user_id: str,
+        limit: int = 10,
+        since_id: Optional[str] = None,
+        until_id: Optional[str] = None,
+        since_date: Optional[Union[int, datetime.datetime]] = None,
+        until_date: Optional[Union[int, datetime.datetime]] = None,
+    ) -> List[dict]:
+        """Get reactions created by the specified user.
+
+        Args:
+            user_id (str): Specifies the user ID.
+
+            limit (int, default: 10): Specifies the amount to get.
+            You can specify from 1 to 100.
+
+            since_id (str, optional): Specifies the first ID to get.
+
+            until_id (str, optional): Specifies the last ID to get.
+
+            since_date (:obj:`datetime.datetime`, optional): Specifies
+            the first date to get.
+
+            since_date (:obj:`datetime.datetime`, optional): Specifies
+            the last date to get.
+
+        Endpoint:
+            :code:`users/reactions`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns the list of reactions.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        if isinstance(since_date, datetime.datetime):
+            since_date = math.floor(since_date.timestamp() * 1000)
+        if isinstance(until_date, datetime.datetime):
+            until_date = math.floor(until_date.timestamp() * 1000)
+        params = self.__params(locals())
+        return self.__request_api('users/reactions', **params)
+
+    def users_search(
+        self,
+        query: str,
+        limit: int = 10,
+        offset: int = 0,
+        origin: Union[UserOrigin, str] = UserOrigin.LOCAL,
+        detail: bool = True,
+    ) -> List[dict]:
+        """Search for users.
+
+        Args:
+            query(str): Specifies the search query. If starts with :code:`@`,
+            search for users whose username starts with the query. Otherwise,
+            search for users that contain query in their display name,
+            username or profiles.
+
+            limit (int, default: 10): Specifies the amount to get.
+            You can specify from 1 to 100.
+
+            offset (int, default: 0): Specifies the offset to get.
+
+            origin (str, default: :code:`local`): Specifies the origin type of
+            users to get. Available values are enumerated in
+            :class:`enum.UserOrigin`. If :code:`combined`, both :code:`local`
+            and :code:`remote` users are included in the result.
+
+            detail (bool, default: :code:`True`): Specifies whether to get
+            detailed profiles.
+
+        Endpoint:
+            :code:`users/search`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns the list of users. Those
+            inactive for more than 30 days or suspended users are excluded from
+            the result. Sorted by the last note created by the user, in reverse
+            chronological order.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+
+            ValueError: Raise if :code:`origin` is invalid.
+        """
+        if type(origin) is str:
+            origin = UserOrigin(origin)
+        params = self.__params(locals())
+        return self.__request_api('users/search', **params)
+
+    def users_search_by_username_and_host(
+        self,
+        username: Optional[str] = None,
+        host: Optional[str] = None,
+        limit: int = 10,
+        detail: bool = True,
+    ) -> List[dict]:
+        """Search for users by username and host.
+
+        Args:
+            username (str, optional): Specifies the username to search.
+
+            host (str, optional): Specifies the host to search.
+
+            limit (int, default: 10): Specifies the amount to get.
+            You can specify from 1 to 100.
+
+            detail (bool, default: :code:`True`): Specifies whether to get
+            detailed profiles.
+
+        Endpoint:
+            :code:`users/search-by-username-and-host`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns the list of users. Those
+            inactive for more than 30 days or suspended users are excluded from
+            the result. Sorted by the last note created by the user, in reverse
+            chronological order.
+
+        Note:
+            You must specify at least any of :code:`username` or :code:`host`.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api(
+            'users/search-by-username-and-host',
+            **params
+        )
+
+    def email_address_available(
+        self,
+        email_address: str,
+    ) -> dict:
+        """Check if the email address is available for the instance.
+
+        Args:
+            email_address (str): Specifies the email address.
+
+        Endpoint:
+            :code:`email-address/available`
+
+        Returns:
+            dict: Returns whether the address is available and the reason if
+            unavailable.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api(
+            'email-address/available',
+            emailAddress=email_address
+        )
+
+    def pinned_users(self) -> List[dict]:
+        """Get a list of users pinned by the administrator of the instance.
+
+        Endpoint:
+            :code:`pinned-users`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns the list of users.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('pinned-users')
+
+    def username_available(
+        self,
+        username: str,
+    ) -> dict:
+        """Check if the username is available for the instance.
+
+        Args:
+            username (str): Specifies the username.
+
+        Endpoint:
+            :code:`username/available`
+
+        Returns:
+            dict: Returns whether the username is available.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('username/available', **params)
 
     def following_create(
         self,
@@ -1752,14 +3144,38 @@ class Misskey:
         """
         return self.__request_api('following/delete', userId=user_id)
 
+    def following_invalidate(
+        self,
+        user_id: str,
+    ) -> dict:
+        """Invalidate follow from the specified user.
+
+        Args:
+            user_id (str): Specifies the user ID.
+
+        Endpoint:
+            :code:`following/invalidate`
+
+        Returns:
+            dict: Returns the following information.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('following/invalidate', userId=user_id)
+
     def mute_create(
         self,
         user_id: str,
+        expires_at: Optional[Union[int, datetime.datetime]] = None,
     ) -> bool:
         """Mute the specified user.
 
         Args:
             user_id (str): Specify the user ID.
+
+            expires_at (:obj:`datetime.datetime`, optional): Specifies the date
+            the mute expires at. If :code:`None`, mute indefinitely.
 
         Endpoint:
             :code:`mute/create`
@@ -1770,6 +3186,8 @@ class Misskey:
         Raises:
             MisskeyAPIException: Raise if the API request fails.
         """
+        if isinstance(expires_at, datetime.datetime):
+            expires_at = math.floor(expires_at.timestamp() * 1000)
         return self.__request_api('mute/create', userId=user_id)
 
     def mute_list(
@@ -1956,8 +3374,20 @@ class Misskey:
 
     def following_requests_list(
         self,
+        limit: int = 10,
+        since_id: Optional[str] = None,
+        until_id: Optional[str] = None,
     ) -> List[dict]:
         """Get list of following requests.
+
+        Args:
+            limit (int, default: 10): Specifies the amount to get.
+            You can specify from 1 to 100.
+
+            since_id (str, optional): Specifies the first ID to get.
+
+            until_id (str, optional): Specifies the last ID to get.
+
 
         Endpoint:
             :code:`following/requests/list`
@@ -1968,7 +3398,8 @@ class Misskey:
         Raises:
             MisskeyAPIException: Raise if the API request fails.
         """
-        return self.__request_api('following/requests/list')
+        params = self.__params(locals())
+        return self.__request_api('following/requests/list', **params)
 
     def drive(self) -> dict:
         """Get drive usage information.
@@ -2267,6 +3698,69 @@ class Misskey:
         """
         return self.__request_api('drive/files/delete', fileId=file_id)
 
+    def drive_files_find(
+        self,
+        name: str,
+        folder_id: Optional[str] = None,
+    ) -> List[dict]:
+        """Get files with the specified name.
+
+        Args:
+            name (str): Specifies the file name.
+
+            folder_id (Optional[str]): Specifies the folder ID of the parent
+            folder. If :code:`None`, search files in root folder.
+
+        Endpoint:
+            :code:`drive/files/find`
+
+        Returns:
+            List[dict]: Returns the list of files.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('drive/files/find', **params)
+
+    def drive_files_upload_from_url(
+        self,
+        url: str,
+        folder_id: Optional[str] = None,
+        is_sensitive: bool = False,
+        comment: Optional[str] = None,
+        marker: Optional[str] = None,
+        force: bool = False,
+    ) -> bool:
+        """Upload a file specified with the source URL to the drive.
+
+        Args:
+            url (str): Specifies the URL where the file content locates.
+
+            folder_id (str, optional): Specifies the folder ID.
+
+            is_sensitive (bool, default: :code:`False`): Specifies whether the
+            file is sensitive.
+
+            comment (str, optional): Specifies the caption of the file.
+
+            marker (str, optional): Specifies the marker to track the upload.
+
+            force (bool, optional): Specifies whether to overwrite the file
+            if it already exists.
+
+        Endpoint:
+            :code:`drive/files/upload-from-url`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('drive/files/upload-from-url', **params)
+
     def drive_folders(
         self,
         limit: int = 10,
@@ -2393,3 +3887,1957 @@ class Misskey:
             'drive/folders/delete',
             folderId=folder_id
         )
+
+    def drive_folders_find(
+        self,
+        name: str,
+        parent_id: Optional[str] = None,
+    ) -> List[dict]:
+        """Get folders with the specified name.
+
+        Args:
+            name (str): Specifies the folder name.
+
+            folder_id (Optional[str]): Specifies the folder ID of the parent
+            folder. If :code:`None`, search folders in root folder.
+
+        Endpoint:
+            :code:`drive/folders/find`
+
+        Returns:
+            List[dict]: Returns the list of folders.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('drive/folders/find', **params)
+
+    def antennas_create(
+        self,
+        name: str,
+        src: Union[AntennaSource, str] = AntennaSource.ALL,
+        user_list_id: Optional[str] = None,
+        keywords: List[List[str]] = [[]],
+        exclude_keywords: List[List[str]] = [[]],
+        users: List[str] = [],
+        case_sensitive: bool = False,
+        with_replies: bool = False,
+        with_file: bool = False,
+        notify: bool = False,
+    ) -> dict:
+        """Create an antenna.
+
+        Args:
+            name (str): Specifies the name of the antenna.
+
+            src (str, default: :code:`all`): Specifies antenna source.
+            Available values are enumerated in :class:`enum.AntennaSource`.
+
+            user_list_id (str, optional):
+            If :code:`src` is :code:`list`, specifies the list ID.
+
+            keywords
+            (:obj:`list` of :obj:`list` of :obj:`str`, default: :code:`[[]]`):
+            Specifies keywords to listen to. Keywords in the inner list join
+            with AND conditions and the outer list with OR conditions.
+
+            exclude_keywords
+            (:obj:`list` of :obj:`list` of :obj:`str`, default: :code:`[[]]`):
+            Specifies keywords to exclude. Keywords in the inner list join with
+            AND conditions and the outer list with OR conditions.
+
+            users (:obj:`list` of :obj:`str`, default: :code:`[]`):
+            Specifies usernames of users to listen to.
+
+            case_sensitive (bool, default: :code:`False`):
+            Specifies whether keywords are case sensitive.
+
+            with_replies (bool, default: :code:`False`):
+            Specifies whether to include replies.
+
+            with_file (bool, default: :code:`False`):
+            Specifies whether to listen only to notes with files.
+
+            notify (bool, default: :code:`False`):
+            Specifies whether to notify about new notes.
+
+        Endpoint:
+            :code:`antennas/create`
+
+        Note:
+            If :code:`src` is :code:`list`,
+            :code:`user_list_id` must be specified.
+
+        Returns:
+            dict: Returns the created antenna information.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+
+            ValueError: Raise if :code:`src` is invalid.
+        """
+        if type(src) is str:
+            src = AntennaSource(src)
+
+        params = self.__params(locals())
+        return self.__request_api('antennas/create', **params)
+
+    def antennas_delete(
+        self,
+        antenna_id: str,
+    ) -> bool:
+        """Delete an antenna.
+
+        Args:
+            antenna_id (str): Specifies the antenna ID.
+
+        Endpoint:
+            :code:`antennas/delete`
+
+        Returns:
+            bool: Returns :code:`True` if the antenna is deleted.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('antennas/delete', antennaId=antenna_id)
+
+    def antennas_list(self) -> List[dict]:
+        """Get list of antennas.
+
+        Endpoint:
+            :code:`antennas/list`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns a list of antennas.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('antennas/list')
+
+    def antennas_notes(
+        self,
+        antenna_id: str,
+        limit: int = 10,
+        since_id: Optional[str] = None,
+        until_id: Optional[str] = None,
+        since_date: Union[int, datetime.datetime, None] = None,
+        until_date: Union[int, datetime.datetime, None] = None,
+    ) -> List[dict]:
+        """Get notes from the specified antenna.
+
+        Args:
+            antenna_id (str): Specifies the antenna ID.
+
+            limit (int, default: :code:`10`): Specifies the amount to get.
+            You can specify from 1 to 100.
+
+            since_id (str, optional): Specifies the first ID to get.
+
+            until_id (str, optional): Specifies the last ID to get.
+
+            since_date (int, datetime.datetime, optional): Specifies
+            the first date to get.
+
+            until_date (int, datetime.datetime, optional): Specifies
+            the last date to get.
+
+
+        Endpoint:
+            :code:`antennas/notes`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns a list of notes.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        if isinstance(since_date, datetime.datetime):
+            since_date = math.floor(since_date.timestamp() * 1000)
+        if isinstance(until_date, datetime.datetime):
+            until_date = math.floor(until_date.timestamp() * 1000)
+
+        params = self.__params(locals())
+        return self.__request_api('antennas/notes', **params)
+
+    def antennas_show(
+        self,
+        antenna_id: str
+    ) -> dict:
+        """Get user antenna detail.
+
+        Args:
+            antenna_id (str): Specifies the antenna ID.
+
+        Endpoint:
+            :code:`antennas/show`
+
+        Returns:
+            dict: Returns the antenna information.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('antennas/show', antennaId=antenna_id)
+
+    def antennas_update(
+        self,
+        antenna_id: str,
+        name: str,
+        src: Union[AntennaSource, str] = AntennaSource.ALL,
+        user_list_id: Optional[str] = None,
+        keywords: List[List[str]] = [[]],
+        exclude_keywords: List[List[str]] = [[]],
+        users: List[str] = [],
+        case_sensitive: bool = False,
+        with_replies: bool = False,
+        with_file: bool = False,
+        notify: bool = False,
+    ) -> dict:
+        """Update an antenna.
+
+        Args:
+            antenna_id (str): Specifies the antenna ID to update.
+
+            name (str): Specifies the name of the antenna.
+
+            src (str, default: :code:`all`): Specifies antenna source.
+            Available values are enumerated in :class:`enum.AntennaSource`.
+
+            user_list_id (str, optional):
+            If :code:`src` is :code:`list`, specifies the list ID.
+
+            keywords
+            (:obj:`list` of :obj:`list` of :obj:`str`, default: :code:`[[]]`):
+            Specifies keywords to listen to. Keywords in the inner list join
+            with AND conditions and the outer list with OR conditions.
+
+            exclude_keywords
+            (:obj:`list` of :obj:`list` of :obj:`str`, default: :code:`[[]]`):
+            Specifies keywords to exclude. Keywords in the inner list join with
+            AND conditions and the outer list with OR conditions.
+
+            users (:obj:`list` of :obj:`str`, default: :code:`[]`):
+            Specifies usernames of users to listen to.
+
+            case_sensitive (bool, default: :code:`False`):
+            Specifies whether keywords are case sensitive.
+
+            with_replies (bool, default: :code:`False`):
+            Specifies whether to include replies.
+
+            with_file (bool, default: :code:`False`):
+            Specifies whether to listen only to notes with files.
+
+            notify (bool, default: :code:`False`):
+            Specifies whether to notify about new notes.
+
+        Endpoint:
+            :code:`antennas/update`
+
+        Note:
+            If :code:`src` is :code:`list`, :code:`user_list_id` must be
+            specified.
+
+            If you do not specify any of arguments, the corresponding parts of
+            your antenna settings will be updated with the default values.
+
+        Returns:
+            dict: Returns the updated antenna information.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+
+            ValueError: Raise if :code:`src` is invalid.
+        """
+        if type(src) is str:
+            src = AntennaSource(src)
+
+        params = self.__params(locals())
+        return self.__request_api('antennas/update', **params)
+
+    def channels_create(
+        self,
+        name: str,
+        description: Optional[str] = None,
+        banner_id: Optional[str] = None,
+    ) -> dict:
+        """Create a channel.
+
+        Args:
+            name (str): Specifies the name of the channel.
+
+            description (str, optional):
+            Specifies the description of the channel.
+
+            banner_id (str, optional):
+            Specifies the file ID of the banner image for the channel.
+
+        Endpoint:
+            :code:`channels/create`
+
+        Returns:
+            dict: Returns the created channel information.
+
+        Note:
+            Once you have created a channel, it cannot be deleted.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('channels/create', **params)
+
+    def channels_featured(self) -> List[dict]:
+        """Get list of featured channels.
+
+        Endpoint:
+            :code:`channels/featured`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns the list of featured channels.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('channels/featured')
+
+    def channels_follow(
+        self,
+        channel_id: str,
+    ) -> bool:
+        """Follow the specified channel.
+
+        Args:
+            channel_id (str): Specifies the channel ID to follow.
+
+        Endpoint:
+            :code:`channels/follow`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('channels/follow', channelId=channel_id)
+
+    def channels_followed(
+        self,
+        limit: int = 5,
+        since_id: Optional[str] = None,
+        until_id: Optional[str] = None,
+    ) -> List[dict]:
+        """Get list of channels you are following.
+
+        Args:
+            limit (int, default: 5): Specifies the amount to get.
+            You can specify from 1 to 100.
+
+            since_id (str, optional): Specifies the first ID to get.
+
+            until_id (str, optional): Specifies the last ID to get.
+
+        Endpoint:
+            :code:`channels/followed`
+
+        Returns:
+            :obj:`list` of :obj:`dict`:
+            Returns the list of channels you are following.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('channels/followed', **params)
+
+    def channels_owned(
+        self,
+        limit: int = 5,
+        since_id: Optional[str] = None,
+        until_id: Optional[str] = None,
+    ) -> List[dict]:
+        """Get list of channels you have created.
+
+        Args:
+            limit (int, default: 5): Specifies the amount to get.
+            You can specify from 1 to 100.
+
+            since_id (str, optional): Specifies the first ID to get.
+
+            until_id (str, optional): Specifies the last ID to get.
+
+        Endpoint:
+            :code:`channels/owned`
+
+        Returns:
+            :obj:`list` of :obj:`dict`:
+            Returns the list of channels you have created.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('channels/owned', **params)
+
+    def channels_show(
+        self,
+        channel_id: str,
+    ) -> dict:
+        """Get channel details.
+
+        Args:
+            channel_id (str): Specifies the channel ID to get.
+
+        Endpoint:
+            :code:`channels/show`
+
+        Returns:
+            dict: Returns the channel information.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('channels/show', channelId=channel_id)
+
+    def channels_timeline(
+        self,
+        channel_id: str,
+        limit: int = 10,
+        since_id: Optional[str] = None,
+        until_id: Optional[str] = None,
+        since_date: Union[int, datetime.datetime, None] = None,
+        until_date: Union[int, datetime.datetime, None] = None,
+    ) -> List[dict]:
+        """Get notes from the specified channel.
+
+        Args:
+            channel_id (str): Specifies the channel ID to get.
+
+            limit (int, default: 10): Specifies the amount to get.
+            You can specify from 1 to 100.
+
+            since_id (str, optional): Specifies the first ID to get.
+
+            until_id (str, optional): Specifies the last ID to get.
+
+            since_date (int, datetime.datetime, optional): Specifies
+            the first date to get.
+
+            until_date (int, datetime.datetime, optional): Specifies
+            the last date to get.
+
+        Endpoint:
+            :code:`channels/timeline`
+
+        Returns:
+            :obj:`list` of :obj:`dict`:
+            Returns the list of notes from the channel.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        if isinstance(since_date, datetime.datetime):
+            since_date = math.floor(since_date.timestamp() * 1000)
+        if isinstance(until_date, datetime.datetime):
+            until_date = math.floor(until_date.timestamp() * 1000)
+        params = self.__params(locals())
+        return self.__request_api('channels/timeline', **params)
+
+    def channels_unfollow(
+        self,
+        channel_id: str,
+    ) -> bool:
+        """Unfollow the specified channel.
+
+        Args:
+            channel_id (str): Specifies the channel ID to unfollow.
+
+        Endpoint:
+            :code:`channels/unfollow`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('channels/unfollow', channelId=channel_id)
+
+    def channels_update(
+        self,
+        channel_id: str,
+        name: str,
+        description: Optional[str] = None,
+        banner_id: Optional[str] = None,
+    ) -> dict:
+        """Update a channel.
+
+        Args:
+            channel_id (str): Specifies the channel ID to update.
+
+            name (str): Specifies the name of the channel.
+
+            description (str, optional):
+            Specifies the description of the channel.
+
+            banner_id (str, optional):
+            Specifies the file ID of the banner image for the channel.
+
+        Note:
+            If you do not specify any of arguments, the corresponding parts of
+            your channel settings will be updated with the default values.
+
+        Endpoint:
+            :code:`channels/update`
+
+        Returns:
+            dict: Returns the updated channel information.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('channels/update', **params)
+
+    def charts_active_users(
+        self,
+        span: Union[ChartSpan, str] = ChartSpan.DAY,
+        limit: int = 30,
+        offset: Optional[int] = None,
+    ) -> dict:
+        """Get chart of active users.
+
+        Args:
+            span (str, default: :code:`day`):
+            Specifies spans of single items in the chart.
+
+            limit (int, default: :code:`30`): Specifies the amount to get.
+            You can specify from 1 to 500.
+
+            offset (int, optional): Specifies the offset to get.
+
+        Endpoint:
+            :code:`charts/active-users`
+
+        Returns:
+            dict: Returns the active users chart.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+
+            ValueError: Raise if :code:`span` is invalid.
+        """
+        if type(span) is str:
+            span = ChartSpan(span)
+        params = self.__params(locals())
+        return self.__request_api('charts/active-users', **params)
+
+    def charts_ap_request(
+        self,
+        span: Union[ChartSpan, str] = ChartSpan.DAY,
+        limit: int = 30,
+        offset: Optional[int] = None,
+    ) -> dict:
+        """Get chart of ActivityPub requests amount.
+
+        Args:
+            span (str, default: :code:`day`):
+            Specifies spans of single items in the chart.
+
+            limit (int, default: :code:`30`): Specifies the amount to get.
+            You can specify from 1 to 500.
+
+            offset (int, optional): Specifies the offset to get.
+
+        Endpoint:
+            :code:`charts/ap-request`
+
+        Returns:
+            dict: Returns the ActivityPub request chart.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+
+            ValueError: Raise if :code:`span` is invalid.
+        """
+        if type(span) is str:
+            span = ChartSpan(span)
+        params = self.__params(locals())
+        return self.__request_api('charts/ap-request', **params)
+
+    def charts_drive(
+        self,
+        span: Union[ChartSpan, str] = ChartSpan.DAY,
+        limit: int = 30,
+        offset: Optional[int] = None,
+    ) -> dict:
+        """Get chart of drive file difference.
+
+        Args:
+            span (str, default: :code:`day`):
+            Specifies spans of single items in the chart.
+
+            limit (int, default: :code:`30`): Specifies the amount to get.
+            You can specify from 1 to 500.
+
+            offset (int, optional): Specifies the offset to get.
+
+        Endpoint:
+            :code:`charts/drive`
+
+        Returns:
+            dict: Returns the drive chart.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+
+            ValueError: Raise if :code:`span` is invalid.
+        """
+        if type(span) is str:
+            span = ChartSpan(span)
+        params = self.__params(locals())
+        return self.__request_api('charts/drive', **params)
+
+    def charts_federation(
+        self,
+        span: Union[ChartSpan, str] = ChartSpan.DAY,
+        limit: int = 30,
+        offset: Optional[int] = None,
+    ) -> dict:
+        """Get chart of federation.
+
+        Args:
+            span (str, default: :code:`day`):
+            Specifies spans of single items in the chart.
+
+            limit (int, default: :code:`30`): Specifies the amount to get.
+            You can specify from 1 to 500.
+
+            offset (int, optional): Specifies the offset to get.
+
+        Endpoint:
+            :code:`charts/federation`
+
+        Returns:
+            dict: Returns the federation chart.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+
+            ValueError: Raise if :code:`span` is invalid.
+        """
+        if type(span) is str:
+            span = ChartSpan(span)
+        params = self.__params(locals())
+        return self.__request_api('charts/federation', **params)
+
+    def charts_instance(
+        self,
+        host: str,
+        span: Union[ChartSpan, str] = ChartSpan.DAY,
+        limit: int = 30,
+        offset: Optional[int] = None,
+    ) -> dict:
+        """Get chart of the specified instance.
+
+        Args:
+            host (str): Specifies the host of the instance.
+
+            span (str, default: :code:`day`):
+            Specifies spans of single items in the chart.
+
+            limit (int, default: :code:`30`): Specifies the amount to get.
+            You can specify from 1 to 500.
+
+            offset (int, optional): Specifies the offset to get.
+
+        Endpoint:
+            :code:`charts/instance`
+
+        Returns:
+            dict: Returns the instance chart.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+
+            ValueError: Raise if :code:`span` is invalid.
+        """
+        if type(span) is str:
+            span = ChartSpan(span)
+        params = self.__params(locals())
+        return self.__request_api('charts/instance', **params)
+
+    def charts_notes(
+        self,
+        span: Union[ChartSpan, str] = ChartSpan.DAY,
+        limit: int = 30,
+        offset: Optional[int] = None,
+    ) -> dict:
+        """Get chart of notes.
+
+        Args:
+            span (str, default: :code:`day`):
+            Specifies spans of single items in the chart.
+
+            limit (int, default: :code:`30`): Specifies the amount to get.
+            You can specify from 1 to 500.
+
+            offset (int, optional): Specifies the offset to get.
+
+        Endpoint:
+            :code:`charts/notes`
+
+        Returns:
+            dict: Returns the notes chart.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+
+            ValueError: Raise if :code:`span` is invalid.
+        """
+        if type(span) is str:
+            span = ChartSpan(span)
+        params = self.__params(locals())
+        return self.__request_api('charts/notes', **params)
+
+    def charts_user_drive(
+        self,
+        user_id: str,
+        span: Union[ChartSpan, str] = ChartSpan.DAY,
+        limit: int = 30,
+        offset: Optional[int] = None,
+    ) -> dict:
+        """Get chart of drive usage of the specified user.
+
+        Args:
+            user_id (str): Specifies the user ID.
+
+            span (str, default: :code:`day`):
+            Specifies spans of single items in the chart.
+
+            limit (int, default: :code:`30`): Specifies the amount to get.
+            You can specify from 1 to 500.
+
+            offset (int, optional): Specifies the offset to get.
+
+        Endpoint:
+            :code:`charts/user/drive`
+
+        Returns:
+            dict: Returns the user drive chart.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+
+            ValueError: Raise if :code:`span` is invalid.
+        """
+        if type(span) is str:
+            span = ChartSpan(span)
+        params = self.__params(locals())
+        return self.__request_api('charts/user/drive', **params)
+
+    def charts_user_following(
+        self,
+        user_id: str,
+        span: Union[ChartSpan, str] = ChartSpan.DAY,
+        limit: int = 30,
+        offset: Optional[int] = None,
+    ) -> dict:
+        """Get chart of following and followers number of the specified user.
+
+        Args:
+            user_id (str): Specifies the user ID.
+
+            span (str, default: :code:`day`):
+            Specifies spans of single items in the chart.
+
+            limit (int, default: :code:`30`): Specifies the amount to get.
+            You can specify from 1 to 500.
+
+            offset (int, optional): Specifies the offset to get.
+
+        Endpoint:
+            :code:`charts/user/following`
+
+        Returns:
+            dict: Returns the user following chart.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+
+            ValueError: Raise if :code:`span` is invalid.
+        """
+        if type(span) is str:
+            span = ChartSpan(span)
+        params = self.__params(locals())
+        return self.__request_api('charts/user/following', **params)
+
+    def charts_user_notes(
+        self,
+        user_id: str,
+        span: Union[ChartSpan, str] = ChartSpan.DAY,
+        limit: int = 30,
+        offset: Optional[int] = None,
+    ) -> dict:
+        """Get chart of notes of the specified user.
+
+        Args:
+            user_id (str): Specifies the user ID.
+
+            span (str, default: :code:`day`):
+            Specifies spans of single items in the chart.
+
+            limit (int, default: :code:`30`): Specifies the amount to get.
+            You can specify from 1 to 500.
+
+            offset (int, optional): Specifies the offset to get.
+
+        Endpoint:
+            :code:`charts/user/notes`
+
+        Returns:
+            dict: Returns the user notes chart.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+
+            ValueError: Raise if :code:`span` is invalid.
+        """
+        if type(span) is str:
+            span = ChartSpan(span)
+        params = self.__params(locals())
+        return self.__request_api('charts/user/notes', **params)
+
+    def charts_user_pv(
+        self,
+        user_id: str,
+        span: Union[ChartSpan, str] = ChartSpan.DAY,
+        limit: int = 30,
+        offset: Optional[int] = None,
+    ) -> dict:
+        """Get chart of profile view count of the specified user.
+
+        Args:
+            user_id (str): Specifies the user ID.
+
+            span (str, default: :code:`day`):
+            Specifies spans of single items in the chart.
+
+            limit (int, default: :code:`30`): Specifies the amount to get.
+            You can specify from 1 to 500.
+
+            offset (int, optional): Specifies the offset to get.
+
+        Endpoint:
+            :code:`charts/user/pv`
+
+        Returns:
+            dict: Returns the user pv chart.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+
+            ValueError: Raise if :code:`span` is invalid.
+        """
+        if type(span) is str:
+            span = ChartSpan(span)
+        params = self.__params(locals())
+        return self.__request_api('charts/user/pv', **params)
+
+    def charts_user_reactions(
+        self,
+        user_id: str,
+        span: Union[ChartSpan, str] = ChartSpan.DAY,
+        limit: int = 30,
+        offset: Optional[int] = None,
+    ) -> dict:
+        """Get chart of received reactions of the specified user.
+
+        Args:
+            user_id (str): Specifies the user ID.
+
+            span (str, default: :code:`day`):
+            Specifies spans of single items in the chart.
+
+            limit (int, default: :code:`30`): Specifies the amount to get.
+            You can specify from 1 to 500.
+
+            offset (int, optional): Specifies the offset to get.
+
+        Endpoint:
+            :code:`charts/user/reactions`
+
+        Returns:
+            dict: Returns the user reactions chart.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+
+            ValueError: Raise if :code:`span` is invalid.
+        """
+        if type(span) is str:
+            span = ChartSpan(span)
+        params = self.__params(locals())
+        return self.__request_api('charts/user/reactions', **params)
+
+    def charts_users(
+        self,
+        span: Union[ChartSpan, str] = ChartSpan.DAY,
+        limit: int = 30,
+        offset: Optional[int] = None,
+    ) -> dict:
+        """Get chart of users.
+
+        Args:
+            span (str, default: :code:`day`):
+            Specifies spans of single items in the chart.
+
+            limit (int, default: :code:`30`): Specifies the amount to get.
+            You can specify from 1 to 500.
+
+            offset (int, optional): Specifies the offset to get.
+
+        Endpoint:
+            :code:`charts/users`
+
+        Returns:
+            dict: Returns the users chart.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+
+            ValueError: Raise if :code:`span` is invalid.
+        """
+        if type(span) is str:
+            span = ChartSpan(span)
+        params = self.__params(locals())
+        return self.__request_api('charts/users', **params)
+
+    def clips_add_note(
+        self,
+        clip_id: str,
+        note_id: str,
+    ) -> bool:
+        """Add a note to the specified clip.
+
+        Args:
+            clip_id (str): Specifies the clip ID to add the note.
+
+            note_id (str): Specifies the note ID to add.
+
+        Endpoint:
+            :code:`clips/add-note`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('clips/add-note', **params)
+
+    def clips_create(
+        self,
+        name: str,
+        is_public: bool = False,
+        description: Optional[str] = None,
+    ) -> dict:
+        """Create a clip.
+
+        Args:
+            name (str): Specifies the clip name.
+
+            is_public (bool, default: :code:`False`):
+            Whether to reveal the clip to other users.
+
+            description (str, optional): Specifies the description of the clip.
+
+        Endpoint:
+            :code:`clips/create`
+
+        Returns:
+            dict: Returns the created clip.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('clips/create', **params)
+
+    def clips_delete(
+        self,
+        clip_id: str
+    ) -> bool:
+        """Delete a clip.
+
+        Args:
+            clip_id (str): Specifies the clip ID to delete.
+
+        Endpoint:
+            :code:`clips/delete`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('clips/delete', clipId=clip_id)
+
+    def clips_list(self) -> List[dict]:
+        """Get list of clips you have created.
+
+        Endpoint:
+            :code:`clips/list`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns a list of clips.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('clips/list')
+
+    def clips_notes(
+        self,
+        clip_id: str,
+        limit: int = 10,
+        since_id: Optional[str] = None,
+        until_id: Optional[str] = None,
+    ) -> List[dict]:
+        """Get notes in the specified clip.
+
+        Args:
+            clip_id (str): Specifies the clip ID.
+
+            limit (int, default: :code:`10`): Specifies the amount to get.
+            You can specify from 1 to 100.
+
+            since_id (str, optional): Specifies the first ID to get.
+
+            until_id (str, optional): Specifies the last ID to get.
+
+        Endpoint:
+            :code:`clips/notes`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns a list of notes.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('clips/notes', **params)
+
+    def clips_remove_note(
+        self,
+        clip_id: str,
+        note_id: str,
+    ) -> bool:
+        """Remove a note from the specified clip.
+
+        Args:
+            clip_id (str): Specifies the clip ID to remove the note.
+
+            note_id (str): Specifies the note ID to remove.
+
+        Endpoint:
+            :code:`clips/remove-note`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('clips/remove-note', **params)
+
+    def clips_show(
+        self,
+        clip_id: str,
+    ) -> dict:
+        """Get clip information.
+
+        Args:
+            clip_id (str): Specifies the clip ID.
+
+        Endpoint:
+            :code:`clips/show`
+
+        Returns:
+            dict: Returns the clip information.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('clips/show', clipId=clip_id)
+
+    def clips_update(
+        self,
+        clip_id: str,
+        name: str,
+        is_public: bool = False,
+        description: Optional[str] = None,
+    ) -> dict:
+        """Update the clip information.
+
+        Args:
+            clip_id (str): Specifies the clip ID to update.
+
+            name (str): Specifies the clip name.
+
+            is_public (bool, default: :code:`False`):
+            Whether to reveal the clip to other users.
+
+            description (str, optional): Specifies the description of the clip.
+
+        Endpoint:
+            :code:`clips/update`
+
+        Returns:
+            dict: Returns the updated clip.
+
+        Note:
+            If you do not specify any of arguments, the corresponding parts of
+            your clip settings will be updated with the default values.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('clips/update', **params)
+
+    def flash_create(
+        self,
+        title: str,
+        summary: str,
+        script: str,
+        permissions: List[str] = [],
+    ) -> dict:
+        """Create a Play.
+
+        Args:
+            title (str): Specifies the title of the Play.
+
+            summary (str): Specifies the description of the Play.
+
+            script (str): Specifies the script of the Play.
+
+            permissions (:obj:`list` of :obj:`str`, default: :code:`[]`):
+            Specifies permissions.
+
+        Endpoint:
+            :code:`flash/create`
+
+        Returns:
+            dict: Returns the created Play information.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('flash/create', **params)
+
+    def flash_delete(
+        self,
+        flash_id: str,
+    ) -> List[dict]:
+        """Delete a Play.
+
+        Args:
+            flash_id (str): Specifies the Play ID.
+
+        Endpoint:
+            :code:`flash/delete`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('flash/delete', flashId=flash_id)
+
+    def flash_featured(self) -> List[dict]:
+        """Get list of featured Plays.
+
+        Endpoint:
+            :code:`flash/featured`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns the list of featured Plays.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('flash/featured', **params)
+
+    def flash_like(
+        self,
+        flash_id: str,
+    ) -> bool:
+        """Like the specified Play.
+
+        Args:
+            flash_id (str): Specifies the Play ID.
+
+        Endpoint:
+            :code:`flash/like`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('flash/like', flashId=flash_id)
+
+    def flash_my(
+        self,
+        limit: int = 10,
+        since_id: Optional[str] = None,
+        until_id: Optional[str] = None,
+    ) -> List[dict]:
+        """Get list of Plays you have created.
+
+        Args:
+            limit (int, default: 10): Specifies the amount to get.
+            You can specify from 1 to 100.
+
+            since_id (str, optional): Specifies the first ID to get.
+
+            until_id (str, optional): Specifies the last ID to get.
+
+        Endpoint:
+            :code:`flash/my`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns the list of Plays.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('flash/my', **params)
+
+    def flash_my_likes(
+        self,
+        limit: int = 10,
+        since_id: Optional[str] = None,
+        until_id: Optional[str] = None,
+    ) -> List[dict]:
+        """Get list of Plays you have liked.
+
+        Args:
+            limit (int, default: 10): Specifies the amount to get.
+            You can specify from 1 to 100.
+
+            since_id (str, optional): Specifies the first ID to get.
+
+            until_id (str, optional): Specifies the last ID to get.
+
+        Endpoint:
+            :code:`flash/my-likes`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns the list of Plays.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('flash/my-likes', **params)
+
+    def flash_show(
+        self,
+        flash_id: str,
+    ) -> dict:
+        """Get Play details.
+
+        Args:
+            flash_id (str): Specifies the Play ID to get.
+
+        Endpoint:
+            :code:`flash/show`
+
+        Returns:
+            dict: Returns the Play information.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('flash/show', flashId=flash_id)
+
+    def flash_unlike(
+        self,
+        flash_id: str,
+    ) -> bool:
+        """Unlike the specified Play.
+
+        Args:
+            flash_id (str): Specifies the Play ID.
+
+        Endpoint:
+            :code:`flash/unlike`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('flash/unlike', flashId=flash_id)
+
+    def flash_update(
+        self,
+        flash_id: str,
+        title: str,
+        summary: str,
+        script: str,
+        permissions: List[str] = [],
+    ) -> bool:
+        """Update the Play information.
+
+        Args:
+            flash_id (str): Specifies the Play ID.
+
+            title (str): Specifies the title of the Play.
+
+            summary (str): Specifies the description of the Play.
+
+            script (str): Specifies the script of the Play.
+
+            permissions (:obj:`list` of :obj:`str`, default: :code:`[]`):
+            Specifies permissions.
+
+        Endpoint:
+            :code:`flash/update`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('flash/update', **params)
+
+    def gallery_featured(self) -> List[dict]:
+        """Get list of featured gallery posts.
+
+        Endpoint:
+            :code:`gallery/featured`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns the list of featured gallery
+            posts.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('gallery/featured')
+
+    def gallery_popular(self) -> List[dict]:
+        """Get list of popular gallery posts.
+
+        Endpoint:
+            :code:`gallery/popular`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns the list of popular gallery
+            posts.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('gallery/popular')
+
+    def gallery_posts(
+        self,
+        limit: int = 10,
+        since_id: Optional[str] = None,
+        until_id: Optional[str] = None,
+    ) -> List[dict]:
+        """Get list of gallery posts.
+
+        Args:
+            limit (int, default: 10): Specifies the amount to get.
+            You can specify from 1 to 100.
+
+            since_id (str, optional): Specifies the first ID to get.
+
+            until_id (str, optional): Specifies the last ID to get.
+
+        Endpoint:
+            :code:`gallery/posts`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns the list of gallery posts.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('gallery/posts', **params)
+
+    def gallery_posts_create(
+        self,
+        title: str,
+        file_ids: List[str],
+        description: Optional[str] = None,
+        is_sensitive: bool = False,
+    ) -> dict:
+        """Create a gallery post.
+
+        Args:
+            title (str): Specifies the title of the post.
+
+            file_ids (:obj:`list` of :obj:`str`): Specifies the file ID to
+            attach to the post.
+
+            description (str, optional): Specifies the description of the post.
+
+            is_sensitive (bool, default: :code:`False`): Specifies whether the
+            files are sensitive.
+
+        Endpoint:
+            :code:`gallery/posts/create`
+
+        Returns:
+            dict: Returns the created gallery post information.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('gallery/posts/create', **params)
+
+    def gallery_posts_delete(
+        self,
+        post_id: str,
+    ) -> bool:
+        """Delete a gallery post.
+
+        Args:
+            post_id (str): Specifies the gallery post ID.
+
+        Endpoint:
+            :code:`gallery/posts/delete`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('gallery/posts/delete', postId=post_id)
+
+    def gallery_posts_like(
+        self,
+        post_id: str,
+    ) -> bool:
+        """Like the specified gallery post.
+
+        Args:
+            post_id (str): Specifies the gallery post ID.
+
+        Endpoint:
+            :code:`gallery/posts/like`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('gallery/posts/like', postId=post_id)
+
+    def gallery_posts_show(
+        self,
+        post_id: str,
+    ) -> dict:
+        """Get the gallery post information.
+
+        Args:
+            post_id (str): Specifies the gallery post ID.
+
+        Endpoint:
+            :code:`gallery/posts/show`
+
+        Returns:
+            dict: Returns the gallery post information.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('gallery/posts/show', postId=post_id)
+
+    def gallery_posts_unlike(
+        self,
+        post_id: str,
+    ) -> bool:
+        """Unlike the specified gallery post.
+
+        Args:
+            post_id (str): Specifies the gallery post ID.
+
+        Endpoint:
+            :code:`gallery/posts/unlike`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('gallery/posts/unlike', postId=post_id)
+
+    def gallery_posts_update(
+        self,
+        post_id: str,
+        title: str,
+        file_ids: List[str],
+        description: Optional[str] = None,
+        is_sensitive: bool = False,
+    ) -> dict:
+        """Update a gallery post.
+
+        Args:
+            post_id (str): Specifies the gallery post ID.
+
+            title (str): Specifies the title of the post.
+
+            file_ids (:obj:`list` of :obj:`str`): Specifies the file ID to
+            attach to the post.
+
+            description (str, optional): Specifies the description of the post.
+
+            is_sensitive (bool, default: :code:`False`): Specifies whether the
+            files are sensitive.
+
+        Endpoint:
+            :code:`gallery/posts/update`
+
+        Returns:
+            dict: Returns the updated gallery post information.
+
+        Note:
+            If you do not specify any of arguments, the corresponding parts of
+            your gallery settings will be updated with the default values.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('gallery/posts/update', **params)
+
+    def hashtags_list(
+        self,
+        limit: int = 10,
+        attached_to_user_only: bool = False,
+        attached_to_local_user_only: bool = False,
+        attached_to_remote_user_only: bool = False,
+        sort_key: Union[
+            HashtagsListSortKey,
+            str,
+        ] = HashtagsListSortKey.MENTIONED_USERS,
+        sort_asc: bool = False,
+    ) -> List[dict]:
+        """Get list of hashtags.
+
+        Args:
+            limit (int, default: :code:`10`): Specifies the amount to get.
+            You can specify from 1 to 100.
+
+            attached_to_user_only (bool, default: :code:`False`): Specifies
+            whether to exclude hashtags that are not attached to user profiles.
+
+            attached_to_local_user_only (bool, default: :code:`False`):
+            Specifies whether to exclude hashtags that are not attached to
+            local user profiles.
+
+            attached_to_remote_user_only (bool, default: :code:`False`):
+            Specifies whether to exclude hashtags that are not attached to
+            remote user profiles.
+
+            sort_key (str, default: :code:`mentionedUsers`):
+            Specifies sort key. Available values are enumerated in
+            :class:`enum.HashtagsListSortKey`.
+
+            sort_asc (bool, default: :code:`False`): Specifies the sort order.
+            Hashtags sort in ascending order according to the key specified
+            with :obj:`sort_key` if :code:`True`, descending order if
+            :code:`False`.
+
+        Endpoint:
+            :code:`hashtags/list`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns the list of hashtags.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+
+            ValueError: Raise if :code:`origin` or :code:`sort_key` is invalid.
+        """
+        if type(sort_key) is str:
+            sort_key = HashtagsListSortKey(sort_key)
+        sort = '-' if sort_asc else '+'
+        sort += sort_key.value
+        del sort_key, sort_asc
+        params = self.__params(locals())
+        return self.__request_api('hashtags/list', **params)
+
+    def hashtags_search(
+        self,
+        query: str,
+        limit: int = 10,
+        offset: int = 0,
+    ) -> List[dict]:
+        """Search hashtags that start with the specified query.
+
+        Args:
+            query (str): Specify search query.
+
+            limit (int, default: :code:`10`): Specifies the amount to get.
+            You can specify from 1 to 100.
+
+            offset (int, default: :code:`0`): Specifies the offset to get.
+
+        Endpoint:
+            :code:`hashtags/search`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns a list of hashtags sorted in
+            descending order of use count.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('hashtags/search', **params)
+
+    def hashtags_show(
+        self,
+        tag: str,
+    ) -> dict:
+        """Get information of the specified hashtag.
+
+        Args:
+            tag (str): Specifies the hashtag to search.
+
+        Endpoint:
+            :code:`hashtags/show`
+
+        Returns:
+            dict: Returns the hashtag information.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('hashtags/show', tag=tag)
+
+    def hashtags_trend(self) -> List[dict]:
+        """Get hashtags on trend.
+
+        Endpoint:
+            :code:`hashtags/trend`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns the list of hashtag charts.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('hashtags/trend')
+
+    def hashtags_users(
+        self,
+        tag: str,
+        limit: int = 10,
+        alive_only: bool = False,
+        origin: Union[UserOrigin, str] = UserOrigin.LOCAL,
+        sort_key: Union[
+            UserSortKey,
+            str,
+        ] = UserSortKey.FOLLOWER,
+        sort_asc: bool = False,
+    ) -> List[dict]:
+        """Get list of users that include the specified hashtag in their
+        profile.
+
+        Args:
+            tag (str): Specifies the hashtag to search.
+
+            limit (int, default: :code:`10`): Specifies the amount to get.
+            You can specify from 1 to 100.
+
+            alive_only (bool, default: :code:`False`): Specifies whether to
+            only get users active in 5 days.
+
+            origin (str, default: :code:`local`): Specifies the origin type of
+            users to get. Available values are enumerated in
+            :class:`enum.UserOrigin`. If :code:`combined`, both :code:`local`
+            and :code:`remote` users are included in the result.
+
+            sort_key (str, default: :code:`follower`):
+            Specifies sort key. Available values are enumerated in
+            :class:`enum.UserSortKey`.
+
+            sort_asc (bool, default: :code:`False`): Specifies the sort order.
+            Hashtags sort in ascending order according to the key specified
+            with :obj:`sort_key` if :code:`True`, descending order if
+            :code:`False`.
+
+        Endpoint:
+            :code:`hashtags/users`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns the list of users.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+
+            ValueError: Raise if :code:`origin` or :code:`sort_key` is invalid.
+        """
+        state = 'alive' if alive_only else 'all'
+        if type(origin) is str:
+            origin = UserOrigin(origin)
+        if type(sort_key) is str:
+            sort_key = UserSortKey(sort_key)
+        sort = '-' if sort_asc else '+'
+        sort += sort_key.value
+        del alive_only, sort_key, sort_asc
+        params = self.__params(locals())
+        return self.__request_api('hashtags/users', **params)
+
+    def pages_create(
+        self,
+        title: str,
+        name: str,
+        summary: Optional[str] = None,
+        content: List[dict] = [],
+        variables: List[dict] = [],
+        script: str = '',
+        eye_catching_image_id: Optional[str] = None,
+        font_serif: bool = False,
+        align_center: bool = False,
+        hide_title_when_pinned: bool = False,
+    ) -> dict:
+        """Create a page.
+
+        Args:
+            title (str): Specifies the title of the page.
+
+            name (str): Specifies the unique name of the page.
+
+            summary (str, optional): Specifies the summary of the page.
+
+            content (:obj:`list` of :obj:`dict`): Specifies the content of the
+            page.
+
+            variables (:obj:`list` of :obj:`dict`): Specifies the variables
+            that are to be used in the page.
+
+            script (str): Specifies the script that is used in the page.
+
+            eye_catching_image_id (str, optional): Specifies the file ID of the
+            eye catching image of the page.
+
+            font_serif (bool, default: :code:`False`): Specifies the font. If
+            :code:`True`, serif and if :code:`False`. sans-serif.
+
+            align_center (bool, default: :code:`False`): Specifies whether to
+            center contents of the page.
+
+            hide_title_when_pinned (bool, default: :code:`False`): Specifies
+            whether to hide title when pinned to the profile.
+
+        Endpoint:
+            :code:`pages/create`
+
+        Returns:
+            dict: Returns the created page information.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        font = 'serif' if font_serif else 'sans-serif'
+        params = self.__params(locals(), ('font_serif',))
+        return self.__request_api('pages/create', **params)
+
+    def pages_delete(
+        self,
+        page_id: str
+    ) -> bool:
+        """Delete a page.
+
+        Args:
+            page_id (str): Specifies the page ID.
+
+        Endpoint:
+            :code:`pages/delete`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('pages/delete', pageId=page_id)
+
+    def pages_featured(self) -> List[dict]:
+        """Get a list of featured pages.
+
+        Endpoint:
+            :code:`pages/featured`
+
+        Returns:
+            :obj:`list` of :obj:`dict`: Returns the list of most liked pages.
+            No more than 10 pages are in the list.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('pages/featured')
+
+    def pages_like(
+        self,
+        page_id: str
+    ) -> bool:
+        """Give a like to a page.
+
+        Args:
+            page_id (str): Specifies the page ID.
+
+        Endpoint:
+            :code:`pages/like`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        return self.__request_api('pages/like', pageId=page_id)
+
+    def pages_show(
+        self,
+        page_id: Optional[str] = None,
+        name: Optional[str] = None,
+        username: Optional[str] = None,
+    ) -> dict:
+        """Get information of the specified page.
+
+        Args:
+            page_id (str, optional): Specifies the page ID.
+
+            name (str, optional): Specifies the unique name of the page.
+
+            username (str, optional): Specifies the username of the page
+            author.
+
+        Endpoint:
+            :code:`pages/show`
+
+        Returns:
+            dict: Returns the page information.
+
+        Note:
+            You must specify either :code:`page_id` or :code:`name`.
+
+            If you specify :code:`name`, you must specify :code:`username`.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('pages/show', **params)
+
+    def pages_unlike(
+        self,
+        page_id: str
+    ) -> bool:
+        """Remove a like to the note.
+
+        Args:
+            page_id (str): Specifies the page ID.
+
+        Endpoint:
+            :code:`pages/unlike`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('pages/unlike', **params)
+
+    def pages_update(
+        self,
+        page_id: str,
+        title: str,
+        name: str,
+        summary: Optional[str] = None,
+        content: List[dict] = [],
+        variables: List[dict] = [],
+        script: str = '',
+        eye_catching_image_id: Optional[str] = None,
+        font_serif: bool = False,
+        align_center: bool = False,
+        hide_title_when_pinned: bool = False,
+    ) -> bool:
+        """Update a page.
+
+        Args:
+            page_id (str): Specifies the page ID to update.
+
+            title (str): Specifies the title of the page.
+
+            name (str): Specifies the unique name of the page.
+
+            summary (str, optional): Specifies the summary of the page.
+
+            content (:obj:`list` of :obj:`dict`): Specifies the content of the
+            page.
+
+            variables (:obj:`list` of :obj:`dict`): Specifies the variables
+            that are to be used in the page.
+
+            script (str): Specifies the script that is used in the page.
+
+            eye_catching_image_id (str, optional): Specifies the file ID of the
+            eye catching image of the page.
+
+            font_serif (bool, default: :code:`False`): Specifies the font. If
+            :code:`True`, serif and if :code:`False`. sans-serif.
+
+            align_center (bool, default: :code:`False`): Specifies whether to
+            center contents of the page.
+
+            hide_title_when_pinned (bool, default: :code:`False`): Specifies
+            whether to hide title when pinned to the profile.
+
+        Endpoint:
+            :code:`pages/update`
+
+        Returns:
+            bool: Returns :code:`True` if the request was successful.
+
+        Note:
+            If you do not specify any of arguments, the corresponding parts of
+            your page settings will be updated with the default values.
+
+        Raises:
+            MisskeyAPIException: Raise if the API request fails.
+        """
+        params = self.__params(locals())
+        return self.__request_api('pages/update', **params)

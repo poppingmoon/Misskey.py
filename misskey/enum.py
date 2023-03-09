@@ -12,6 +12,15 @@ class NoteVisibility(Enum):
 
 
 @unique
+class FfVisibility(Enum):
+    """FF visibility Enumeration.
+    """
+    PUBLIC = 'public'
+    FOLLOWERS = 'followers'
+    PRIVATE = 'private'
+
+
+@unique
 class NotificationsType(Enum):
     """Notifications type enumeration.
     """
@@ -26,6 +35,17 @@ class NotificationsType(Enum):
     FOLLOW_REQUEST_ACCEPTED = 'followRequestAccepted'
     GROUP_INVITED = 'groupInvited'
     APP = 'app'
+
+
+@unique
+class EmailNotificationsType(Enum):
+    """Email notifications type enumeration.
+    """
+    FOLLOW = 'follow'
+    MENTIONS = 'mention'
+    REPLY = 'reply'
+    QUOTE = 'quote'
+    RECEIVE_FOLLOW_REQUEST = 'receiveFollowRequest'
 
 
 @unique
@@ -248,6 +268,68 @@ class LangType(Enum):
 
 
 @unique
+class WebhookEventType(Enum):
+    """Webhook event type enumeration.
+    """
+    MENTION = 'mention'
+    UNFOLLOW = 'unfollow'
+    FOLLOW = 'follow'
+    FOLLOWED = 'followed'
+    NOTE = 'note'
+    REPLY = 'reply'
+    RENOTE = 'renote'
+    REACTION = 'reaction'
+
+
+@unique
+class AntennaSource(Enum):
+    """Antenna source enumeration.
+    """
+    HOME = 'home'
+    ALL = 'all'
+    USERS = 'users'
+    LIST = 'list'
+
+
+@unique
+class ChartSpan(Enum):
+    """Chart span enumeration.
+    """
+    DAY = 'day'
+    HOUR = 'hour'
+
+
+@unique
+class HashtagsListSortKey(Enum):
+    """Hashtags list sort key enumeration.
+    """
+    MENTIONED_USERS = 'mentionedUsers'
+    MENTIONED_LOCAL_USERS = 'mentionedLocalUsers'
+    MENTIONED_REMOTE_USERS = 'mentionedRemoteUsers'
+    ATTACHED_USERS = 'attachedUsers'
+    ATTACHED_LOCAL_USERS = 'attachedLocalUsers'
+    ATTACHED_REMOTE_USERS = 'attachedRemoteUsers'
+
+
+@unique
+class UserSortKey(Enum):
+    """User sort key enumeration.
+    """
+    FOLLOWER = 'follower'
+    CREATED_AT = 'createdAt'
+    UPDATED_AT = 'updatedAt'
+
+
+@unique
+class UserOrigin(Enum):
+    """User origin enumeration.
+    """
+    COMBINED = 'combined'
+    LOCAL = 'local'
+    REMOTE = 'remote'
+
+
+@unique
 class Permissions(Enum):
     """Permissions enumuration.
     """
@@ -282,3 +364,7 @@ class Permissions(Enum):
     WRITE_GALLERY = 'write:gallery'
     READ_GALLERY_LIKES = 'read:gallery-likes'
     WRITE_GALLERY_LIKES = 'write:gallery-likes'
+    READ_FLASH = 'read:flash'
+    WRITE_FLASH = 'write:flash'
+    READ_FLASH_LIKES = 'read:flash-likes'
+    WRITE_FLASH_LIKES = 'write:flash-likes'
